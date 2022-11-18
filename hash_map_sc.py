@@ -90,9 +90,17 @@ class HashMap:
 
     def put(self, key: str, value: object) -> None:
         """
-        TODO: Write this implementation
+        Updates the key/value pair in the hash map. If given key already exists, its associated
+        value is replaced with the new value. If given key is not in hash map, new key/value
+        pair is formed
+
+        :param key: key to be modified or inserted into the hash map
+        :type key: str
+        :param value: object to be set as the value of the provided key
+        :type value: object
         """
-        pass
+
+
 
     def empty_buckets(self) -> int:
         """
@@ -102,7 +110,10 @@ class HashMap:
 
     def table_load(self) -> float:
         """
-        TODO: Write this implementation
+        Returns the current hash table load factor
+        
+        :return: current load factor of the hash table
+        :rtype: float
         """
         pass
 
@@ -114,9 +125,22 @@ class HashMap:
 
     def resize_table(self, new_capacity: int) -> None:
         """
-        TODO: Write this implementation
+        Changes the capacity of the internal hash table, with all existing pairs remaining in the new hash map with
+        newly rehashed table links
+        :param new_capacity: new capacity to set the hash table to
+        :type new_capacity: int
         """
-        pass
+        # if new_capacity < 1:
+        #     return
+        #
+        # if not self._is_prime(new_capacity):
+        #     new_capacity = self._next_prime(new_capacity)
+        #
+        # self._capacity = new_capacity
+        #
+        # for i in range(0, new_capacity):
+        #     for slnode in self._buckets[i]:
+        #         self._function(slnode.key)
 
     def get(self, key: str):
         """
