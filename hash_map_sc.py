@@ -99,66 +99,138 @@ class HashMap:
         :param value: object to be set as the value of the provided key
         :type value: object
         """
+        # if the load factor is greater than or equal to 1, resize the table
+        if self.table_load() >= 1.0:
+            self.resize_table(self._capacity * 2)
 
+        hash_value = self._hash_function(key) % self._capacity
+        ll = self._buckets[hash_value]
+
+        # if the linked list at the index contains the key, set the nodes value to the new value and return
+        found_node = ll.contains(key)
+        if found_node is not None:
+            found_node.value = value
+            return
+
+        ll.insert(key, value)
+        self._size += 1
 
 
     def empty_buckets(self) -> int:
         """
-        TODO: Write this implementation
+        Returns the number of empty buckets in the hash table
+
+        :return: Number of empty bucks in hash table
+        :rtype: int
         """
-        pass
+        empty_count = 0
+
+        for i in range(0, self.get_capacity()):
+            if self._buckets[i].length() == 0:
+                empty_count += 1
+
+        return empty_count
 
     def table_load(self) -> float:
         """
         Returns the current hash table load factor
-        
+
         :return: current load factor of the hash table
         :rtype: float
         """
-        pass
+        return self._size / self._capacity
 
     def clear(self) -> None:
         """
-        TODO: Write this implementation
+        Clears the contents of the hash map without changing underlying capacity
         """
-        pass
+
+        for i in range(0, self._capacity):
+            self._buckets[i] = LinkedList()
+
+        self._size = 0
 
     def resize_table(self, new_capacity: int) -> None:
         """
         Changes the capacity of the internal hash table, with all existing pairs remaining in the new hash map with
         newly rehashed table links
+
         :param new_capacity: new capacity to set the hash table to
         :type new_capacity: int
         """
-        # if new_capacity < 1:
-        #     return
-        #
-        # if not self._is_prime(new_capacity):
-        #     new_capacity = self._next_prime(new_capacity)
-        #
-        # self._capacity = new_capacity
-        #
-        # for i in range(0, new_capacity):
-        #     for slnode in self._buckets[i]:
-        #         self._function(slnode.key)
+        if new_capacity < 1:
+            return
 
-    def get(self, key: str):
+        # set the new_capacity to the next available prime number as needed
+        if not self._is_prime(new_capacity):
+            new_capacity = self._next_prime(new_capacity)
+        self._capacity = new_capacity
+
+        # sets up a new DynamicArray with the amount of buckets equal to the new capacity
+        new_buckets = DynamicArray()
+        count = 0
+        while count < self.get_capacity():
+            new_buckets.append(LinkedList())
+            count += 1
+
+        # Moves each node to their new spot on the map based off of the nodes new hash value
+        old_da = self._buckets
+        self._buckets = new_buckets
+        self._size = 0
+        for i in range(0, old_da.length()):
+            for node in old_da[i]:
+                self.put(node.key, node.value)
+
+    def get(self, key: str) -> object:
         """
-        TODO: Write this implementation
+        Returns the value associated with the given key. If the key is not in the hash map,
+        returns None
+
+        :param key: key whose value we are getting
+        :type key: str
+        :return: value object associated with the key
+        :rtype: object
         """
-        pass
+        hash_value = self._hash_function(key) % self.get_capacity()
+
+        for node in self._buckets[hash_value]:
+            if node.key == key:
+                return node.value
+
+        return None
 
     def contains_key(self, key: str) -> bool:
         """
-        TODO: Write this implementation
+        Return True if the given key is in the hash map, otherwise returns False
+
+        :param key: key to search for in the hash map
+        :type key: str
+        :return: True if key is in the hash map, False otherwise
+        :rtype: bool
         """
-        pass
+        hash_value = self._hash_function(key) % self.get_capacity()
+        node = self._buckets[hash_value].contains(key)
+
+        if node is not None:
+            return True
+
+        return False
 
     def remove(self, key: str) -> None:
         """
-        TODO: Write this implementation
+        Removes the given key value pair from the hash map. If the key is not in the hash map, the method does nothing
+
+        :param key: key to be searched for in the hash map
+        :type key: str
         """
-        pass
+        hash_value = self._hash_function(key) % self.get_capacity()
+
+        removed_node = self._buckets[hash_value].remove(key)
+
+        if removed_node:
+            self._size -= 1
+
+
 
     def get_keys_and_values(self) -> DynamicArray:
         """
@@ -259,6 +331,14 @@ if __name__ == "__main__":
     print(m.get_size(), m.get_capacity())
     m.clear()
     print(m.get_size(), m.get_capacity())
+
+    print("steve resize test")
+    print("----------------------")
+    m = HashMap(3, hash_function_1)
+    m.put('a', 10)
+    print(m.get_size(), m.get_capacity(), m.get('a'), m.contains_key('a'))
+    m.resize_table(7)
+    print(m.get_size(), m.get_capacity(), m.get('a'), m.contains_key('a'))
 
     print("\nPDF - resize example 1")
     print("----------------------")
