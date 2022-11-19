@@ -230,13 +230,21 @@ class HashMap:
         if removed_node:
             self._size -= 1
 
-
-
     def get_keys_and_values(self) -> DynamicArray:
         """
-        TODO: Write this implementation
+        Returns a DynamicArray where each index contains a tuple of a key/value pair from the hashmap
+
+        :return: DynamicArray containing tuples of each key/value pair in the hashmap
+        :rtype: DynamicArray
         """
-        pass
+        new_da = DynamicArray()
+
+        for i in range(0, self._buckets.length()):
+            for node in self._buckets[i]:
+                new_tuple = (node.key, node.value)
+                new_da.append(new_tuple)
+
+        return new_da
 
 
 def find_mode(da: DynamicArray) -> (DynamicArray, int):
