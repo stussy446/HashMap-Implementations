@@ -230,22 +230,61 @@ class HashMap:
         if removed_node:
             self._size -= 1
 
-
-
     def get_keys_and_values(self) -> DynamicArray:
         """
-        TODO: Write this implementation
+        Returns a DynamicArray where each index contains a tuple of a key/value pair from the hashmap
+
+        :return: DynamicArray containing tuples of each key/value pair in the hashmap
+        :rtype: DynamicArray
         """
-        pass
+        new_da = DynamicArray()
+
+        for i in range(0, self._buckets.length()):
+            for node in self._buckets[i]:
+                new_tuple = (node.key, node.value)
+                new_da.append(new_tuple)
+
+        return new_da
 
 
 def find_mode(da: DynamicArray) -> (DynamicArray, int):
     """
-    TODO: Write this implementation
+    Receives a DynamicArray and returns a tuple containing (in order) a DynamicArray comprising the mode value(s) of the
+    array and an integer representing the highest frequency (how many times they appear)
+
+    :param da: DynamicArray in which the mode/frequenc will be determined
+    :return: tuple containing a DynamicArray of all the highest frequency keys, and the frequency they occur
+    :rtype: tuple
     """
-    # if you'd like to use a hash map,
-    # use this instance of your Separate Chaining HashMap
     map = HashMap()
+    highest_frequency = 1
+
+    # places all elements of array into the map, if it is the first time seeing the key set its value to 1, otherwise
+    # add one to its value each time
+    for i in range(0, da.length()):
+        current_key = da[i]
+
+        if not map.contains_key(current_key):
+            map.put(current_key, 1)
+        else:
+            new_value = map.get(current_key) + 1
+            map.put(current_key, new_value)
+
+            # changes the highest frequency if the keys value is now greater than previous highest frequency
+            if new_value > highest_frequency:
+                highest_frequency = new_value
+
+    mode_da = DynamicArray()
+    pairs = map.get_keys_and_values()
+    
+    # puts all the highest frequency keys into the mode_da DynamicArray
+    for i in range(0, pairs.length()):
+        current_key = pairs[i][0]
+        value = pairs[i][1]
+        if value == highest_frequency:
+            mode_da.append(current_key)
+
+    return mode_da, highest_frequency
 
 
 # ------------------- BASIC TESTING ---------------------------------------- #
