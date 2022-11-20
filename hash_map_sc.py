@@ -208,6 +208,9 @@ class HashMap:
         :return: True if key is in the hash map, False otherwise
         :rtype: bool
         """
+        if self.get_size() == 0:
+            return False
+
         hash_value = self._hash_function(key) % self.get_capacity()
         node = self._buckets[hash_value].contains(key)
 

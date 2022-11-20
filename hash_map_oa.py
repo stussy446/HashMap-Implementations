@@ -87,15 +87,53 @@ class HashMap:
 
     def put(self, key: str, value: object) -> None:
         """
-        TODO: Write this implementation
+        Updates the key/value pair in the hash map. If given key already exists, its associated
+        value is replaced with the new value. If given key is not in hash map, new key/value
+        pair is formed
+
+        :param key: key to be modified or inserted into the hash map
+        :type key: str
+        :param value: object to be set as the value of the provided key
+        :type value: object
         """
-        pass
+        # if key is already in the hashmap, replace its value and return
+        existing_entry = self.get(key)
+        if existing_entry is not None:
+            existing_entry.value = value
+            return
+
+        # if the load factor is greater than or equal to 0.5, resize the table
+        if self.table_load() >= 0.5:
+            self.resize_table(self._capacity * 2)
+
+        hash_value = self._hash_function(key) % self._capacity
+        hash_entry = HashEntry(key, value)
+        j = 1
+        # if the current spot in the array is None, set spot to a HashEntry containing the provided key and value
+        if self._buckets[hash_value] is None:
+            self._buckets[hash_value] = hash_entry
+            return
+
+        # traverses using quadratic probing until a tombstone spot is found that can be inserted into or an empty
+        # spot is found
+        while self._buckets[hash_value] is not None:
+            if self._buckets[hash_value].is_tombstone:
+                self._buckets[hash_value] = hash_entry
+                return
+
+            hash_value = (hash_value + j**2) % m
+            j += 1
+
+        self._buckets[hash_value] = hash_entry
 
     def table_load(self) -> float:
         """
-        TODO: Write this implementation
+        Returns the current hash table load factor
+
+        :return: float representing tables current load factor
+        :rtype: float
         """
-        pass
+
 
     def empty_buckets(self) -> int:
         """
@@ -117,9 +155,36 @@ class HashMap:
 
     def contains_key(self, key: str) -> bool:
         """
-        TODO: Write this implementation
+        Returns True if the given key is in the hash map, otherwise returns False
+
+        :param key: key to search for in the hashmap
+        :type key: str
+        :return: True if key is in hash map, False otherwise
+        :rtype: bool
         """
-        pass
+        if self.get_size() == 0:
+            return False
+
+        current_hash_value = self._hash_function(key) % self.get_capacity()
+        current_hash_entry = self._buckets[current_hash_value]
+        j = 1
+
+        # continue traversing the array with quadratic probing until key is found or a non tombstone empty
+        # index is found
+        while current_hash_entry is not None:
+            # if the key is found but a tombstone, return False since it is not really in the map if it is a tombstone
+            if current_hash_entry.key == key:
+                if current_hash_entry.is_tombstone:
+                    return False
+                else:
+                    return True
+
+            current_hash_value = (current_hash_value + j**2) % self.get_capacity()
+            current_hash_entry = self._buckets[current_hash_value]
+            j += 1
+
+        # returns false if going past the while loop, as that indicates the key is non-existant
+        return False
 
     def remove(self, key: str) -> None:
         """
