@@ -96,6 +96,10 @@ class HashMap:
         :param value: object to be set as the value of the provided key
         :type value: object
         """
+        # if the load factor is greater than or equal to 0.5, resize the table
+        if self.table_load() >= 0.5:
+            self.resize_table(self._capacity * 2)
+
         hash_value = self._hash_function(key) % self._capacity
         hash_entry = HashEntry(key, value)
         j = 1
@@ -108,18 +112,15 @@ class HashMap:
             self._buckets[hash_value].value = value
             return
 
-        # if the load factor is greater than or equal to 0.5, resize the table
-        if self.table_load() >= 0.5:
-            self.resize_table(self._capacity * 2)
-
         # traverses using quadratic probing until a tombstone spot is found that can be inserted into or an empty
         # spot is found
         while self._buckets[hash_value] is not None:
             if self._buckets[hash_value].is_tombstone:
                 self._buckets[hash_value] = hash_entry
+                self._size += 1
                 return
 
-            hash_value = (hash_value + j**2) % self.get_capacity()
+            hash_value = (self._hash_function(key) + j**2) % self.get_capacity()
             j += 1
 
         self._buckets[hash_value] = hash_entry
@@ -158,30 +159,21 @@ class HashMap:
 
         if not self._is_prime(new_capacity):
             new_capacity = self._next_prime(new_capacity)
-        self._capacity = new_capacity
 
-        # creates new empty table array with the new capacity and sets this new array as the buckets
         new_buckets = DynamicArray()
-        count = 0
-        while count < self.get_capacity():
-            new_buckets.append(None)
-            count += 1
+        old_buckets = self._buckets
 
-        old_table = self._buckets
+        for i in range(0, new_capacity):
+            new_buckets.append(None)
+
         self._buckets = new_buckets
         self._size = 0
+        self._capacity = new_capacity
 
-        # go through each non tombstone hash entry in the old table and re insert it into the new
-        # table based on their newly calculated hash values
-        for i in range(0, old_table.length()):
-            hash_entry = old_table[i]
-            if hash_entry is None:
-                continue
-
-            current_key = hash_entry.key
-            current_value = hash_entry.value
-            self.put(current_key, current_value)
-
+        for i in range(0, old_buckets.length()):
+            if old_buckets[i] is not None:
+                hash_entry = old_buckets[i]
+                self.put(hash_entry.key, hash_entry.value)
 
     def get(self, key: str) -> object:
         """
@@ -195,18 +187,18 @@ class HashMap:
         if not self.contains_key(key):
             return None
 
-        current_hash_value = self._hash_function(key) % self._capacity
+        current_hash_value = self._hash_function(key) % self.get_capacity()
         current_hash_entry = self._buckets[current_hash_value]
         j = 1
 
         while current_hash_entry is not None:
-            if self._buckets[current_hash_value].key == key:
-                if self._buckets[current_hash_value].is_tombstone:
+            if current_hash_entry.key == key:
+                if current_hash_entry.is_tombstone:
                     return None
                 else:
                     return current_hash_entry.value
 
-            current_hash_value = (self._hash_function(key) + j**2) % self._capacity
+            current_hash_value = (self._hash_function(key) + j**2) % self.get_capacity()
             current_hash_entry = self._buckets[current_hash_value]
             j += 1
 
@@ -238,7 +230,7 @@ class HashMap:
                 else:
                     return True
 
-            current_hash_value = (current_hash_value + j**2) % self.get_capacity()
+            current_hash_value = (self._hash_function(key) + j**2) % self.get_capacity()
             current_hash_entry = self._buckets[current_hash_value]
             j += 1
 
@@ -263,19 +255,34 @@ class HashMap:
             j += 1
 
         hash_entry.is_tombstone = True
-
+        self._size -= 1
 
     def clear(self) -> None:
         """
-        TODO: Write this implementation
+        Clears the contents of the hash map without changing the underlying hash table capacity
         """
-        pass
+        for i in range(0, self._capacity):
+            self._buckets[i] = None
+
+        self._size = 0
 
     def get_keys_and_values(self) -> DynamicArray:
         """
-        TODO: Write this implementation
+        Returns a DynamicArray where each index contains a tuple of a key/vlue pair stored in the Hash Map.
+
+        :return: DynamicArray containing tuples of each key/value pair
+        :rtype: DynamicArray
         """
-        pass
+        new_da = DynamicArray()
+
+        for i in range(0, self.get_capacity()):
+            if self._buckets[i] is not None:
+                if not self._buckets[i].is_tombstone:
+                    hash_entry = self._buckets[i]
+                    new_tuple = (hash_entry.key, hash_entry.value)
+                    new_da.append(new_tuple)
+
+        return new_da
 
     def __iter__(self):
         """
