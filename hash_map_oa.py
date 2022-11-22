@@ -294,7 +294,7 @@ class HashMap:
         """Obtain the next HashEntry and advance the iterator"""
         value = self._buckets[self._index]
 
-        while value is None:
+        while value is None or value.is_tombstone:
             if self._index >= self.get_capacity() - 1:
                 raise StopIteration
             self._index += 1
