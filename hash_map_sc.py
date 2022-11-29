@@ -103,7 +103,7 @@ class HashMap:
         if self.table_load() >= 1.0:
             self.resize_table(self._capacity * 2)
 
-        hash_value = self._hash_function(key) % self._capacity
+        hash_value = self._calculate_hash_value(key)
         ll = self._buckets[hash_value]
 
         # if the linked list at the index contains the key, set the nodes value to the new value and return
@@ -114,6 +114,17 @@ class HashMap:
 
         ll.insert(key, value)
         self._size += 1
+
+    def _calculate_hash_value(self, key) -> int:
+        """
+        Calculates the keys hash value
+
+        :param key: key being hashed
+        :type: str
+        :return: hash_value for key
+        :rtype: int
+        """
+        return self._hash_function(key) % self._capacity
 
     def empty_buckets(self) -> int:
         """
@@ -176,6 +187,16 @@ class HashMap:
         self._size = 0
         self._capacity = new_capacity
 
+        self._build_new_buckets(old_buckets)
+
+    def _build_new_buckets(self, old_buckets):
+        """
+        Takes the existing nodes from the old HashMap buckets and places them in the new buckets based on their new
+        hash values
+
+        :param old_buckets: old buckets Dynamic Array from HashMap
+        :type old_buckets: DynamicArray
+        """
         for i in range(0, old_buckets.length()):
             for node in old_buckets[i]:
                 self.put(node.key, node.value)
@@ -190,7 +211,7 @@ class HashMap:
         :return: value object associated with the key
         :rtype: object
         """
-        hash_value = self._hash_function(key) % self.get_capacity()
+        hash_value = self._calculate_hash_value(key)
 
         for node in self._buckets[hash_value]:
             if node.key == key:
@@ -210,7 +231,7 @@ class HashMap:
         if self.get_size() == 0:
             return False
 
-        hash_value = self._hash_function(key) % self.get_capacity()
+        hash_value = self._calculate_hash_value(key)
         node = self._buckets[hash_value].contains(key)
 
         if node is not None:
@@ -225,7 +246,7 @@ class HashMap:
         :param key: key to be searched for in the hash map
         :type key: str
         """
-        hash_value = self._hash_function(key) % self.get_capacity()
+        hash_value = self._calculate_hash_value(key)
 
         removed_node = self._buckets[hash_value].remove(key)
 

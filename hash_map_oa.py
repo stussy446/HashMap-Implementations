@@ -84,7 +84,6 @@ class HashMap:
         return self._capacity
 
     # ------------------------------------------------------------------ #
-
     def put(self, key: str, value: object) -> None:
         """
         Updates the key/value pair in the hash map. If given key already exists, its associated
@@ -96,35 +95,74 @@ class HashMap:
         :param value: object to be set as the value of the provided key
         :type value: object
         """
-        # if the load factor is greater than or equal to 0.5, resize the table
         if self.table_load() >= 0.5:
             self.resize_table(self._capacity * 2)
 
-        hash_value = self._hash_function(key) % self._capacity
+        hash_value = self._hash_function(key) % self.get_capacity()
         hash_entry = HashEntry(key, value)
-        j = 1
+
         # if key is already in the hashmap, replace its value and return
         if self.contains_key(key):
-            while self._buckets[hash_value].key != key:
-                hash_value = (self._hash_function(key) + j ** 2) % self.get_capacity()
-                j += 1
-
-            self._buckets[hash_value].value = value
+            self._replace_keys_value(key, value, hash_value)
             return
 
-        # traverses using quadratic probing until a tombstone spot is found that can be inserted into or an empty
-        # spot is found
-        while self._buckets[hash_value] is not None:
-            if self._buckets[hash_value].is_tombstone:
-                self._buckets[hash_value] = hash_entry
-                self._size += 1
-                return
-
-            hash_value = (self._hash_function(key) + j**2) % self.get_capacity()
-            j += 1
+        # traverses using quadratic probing until viable hash_value is found
+        hash_value = self._probe_for_hash_value(key, hash_value)
 
         self._buckets[hash_value] = hash_entry
         self._size += 1
+
+    def _calculate_hash_value(self, current_key, j=1) -> int:
+        """
+        Calculates the keys current hash value during quadratic probing
+
+        :param current_key: key being hashed
+        :type: str
+        :param j: increasing value to add original hash_value by (where j = 1, 2, 3....)
+        :type j: int
+        :return: new hash_value for key
+        :rtype: int
+        """
+        return (self._hash_function(current_key) + j ** 2) % self.get_capacity()
+
+    def _replace_keys_value(self, current_key: str, new_value: object, starting_hash_value: int):
+        """
+        Replaces the value of a key that is already a part of the HashMap
+
+        :param current_key: current key from the HashMap
+        :type current_key: str
+        :param new_value: new value object to be placed as the value for the key
+        :type new_value: object
+        :param starting_hash_value: starting hash_value before quadratic probing
+        :type starting_hash_value: int
+        """
+        j = 1
+        while self._buckets[starting_hash_value].key != current_key:
+            starting_hash_value = self._calculate_hash_value(current_key, j)
+            j += 1
+
+        self._buckets[starting_hash_value].value = new_value
+
+    def _probe_for_hash_value(self, current_key: str, starting_hash_value: int) -> int:
+        """
+        Uses quadratic probing to find the next viable hash value for the key whose original hash_value is already taken
+
+        :param current_key: key being hashed
+        :type current_key: str
+        :param starting_hash_value: initial hash value of the current key
+        :type starting_hash_value: int
+        :return: the viable hash value for the current key
+        :rtype: int
+        """
+        j = 1
+        while self._buckets[starting_hash_value] is not None:
+            if self._buckets[starting_hash_value].is_tombstone:
+                return starting_hash_value
+
+            starting_hash_value = self._calculate_hash_value(current_key, j)
+            j += 1
+
+        return starting_hash_value
 
     def table_load(self) -> float:
         """
@@ -143,7 +181,6 @@ class HashMap:
         :rtype: int
         """
         return self.get_capacity() - self.get_size()
-
 
     def resize_table(self, new_capacity: int) -> None:
         """
@@ -170,6 +207,16 @@ class HashMap:
         self._size = 0
         self._capacity = new_capacity
 
+        self._build_new_buckets(old_buckets)
+
+    def _build_new_buckets(self, old_buckets):
+        """
+           Takes the existing pairs from the old HashMap buckets and places them in the new buckets based on their new
+           hash values
+
+           :param old_buckets: old buckets Dynamic Array from HashMap
+           :type old_buckets: DynamicArray
+           """
         for i in range(0, old_buckets.length()):
             if old_buckets[i] is not None:
                 hash_entry = old_buckets[i]
@@ -198,7 +245,7 @@ class HashMap:
                 else:
                     return current_hash_entry.value
 
-            current_hash_value = (self._hash_function(key) + j**2) % self.get_capacity()
+            current_hash_value = self._calculate_hash_value(key, j)
             current_hash_entry = self._buckets[current_hash_value]
             j += 1
 
@@ -230,7 +277,7 @@ class HashMap:
                 else:
                     return True
 
-            current_hash_value = (self._hash_function(key) + j**2) % self.get_capacity()
+            current_hash_value = self._calculate_hash_value(key, j)
             current_hash_entry = self._buckets[current_hash_value]
             j += 1
 
@@ -250,7 +297,7 @@ class HashMap:
         hash_entry = self._buckets[hash_value]
         j = 1
         while hash_entry.key != key:
-            hash_value = (self._hash_function(key) + j**2) % self.get_capacity()
+            hash_value = self._calculate_hash_value(key, j)
             hash_entry = self._buckets[hash_value]
             j += 1
 
