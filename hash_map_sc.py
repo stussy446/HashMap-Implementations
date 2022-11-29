@@ -115,7 +115,6 @@ class HashMap:
         ll.insert(key, value)
         self._size += 1
 
-
     def empty_buckets(self) -> int:
         """
         Returns the number of empty buckets in the hash table
@@ -164,21 +163,21 @@ class HashMap:
         # set the new_capacity to the next available prime number as needed
         if not self._is_prime(new_capacity):
             new_capacity = self._next_prime(new_capacity)
-        self._capacity = new_capacity
 
         # sets up a new DynamicArray with the amount of buckets equal to the new capacity
         new_buckets = DynamicArray()
-        count = 0
-        while count < self.get_capacity():
+        old_buckets = self._buckets
+
+        for i in range(0, new_capacity):
             new_buckets.append(LinkedList())
-            count += 1
 
         # Moves each node to their new spot on the map based off of the nodes new hash value
-        old_da = self._buckets
         self._buckets = new_buckets
         self._size = 0
-        for i in range(0, old_da.length()):
-            for node in old_da[i]:
+        self._capacity = new_capacity
+
+        for i in range(0, old_buckets.length()):
+            for node in old_buckets[i]:
                 self.put(node.key, node.value)
 
     def get(self, key: str) -> object:
@@ -255,7 +254,7 @@ def find_mode(da: DynamicArray) -> (DynamicArray, int):
     Receives a DynamicArray and returns a tuple containing (in order) a DynamicArray comprising the mode value(s) of the
     array and an integer representing the highest frequency (how many times they appear)
 
-    :param da: DynamicArray in which the mode/frequenc will be determined
+    :param da: DynamicArray in which the mode/frequency will be determined
     :return: tuple containing a DynamicArray of all the highest frequency keys, and the frequency they occur
     :rtype: tuple
     """
@@ -266,28 +265,62 @@ def find_mode(da: DynamicArray) -> (DynamicArray, int):
     # add one to its value each time
     for i in range(0, da.length()):
         current_key = da[i]
-
-        if not map.contains_key(current_key):
-            map.put(current_key, 1)
-        else:
-            new_value = map.get(current_key) + 1
-            map.put(current_key, new_value)
-
-            # changes the highest frequency if the keys value is now greater than previous highest frequency
-            if new_value > highest_frequency:
-                highest_frequency = new_value
+        highest_frequency = increase_key_frequency(current_key, highest_frequency, map)
 
     mode_da = DynamicArray()
     pairs = map.get_keys_and_values()
-    
+
     # puts all the highest frequency keys into the mode_da DynamicArray
+    build_mode_array(highest_frequency, mode_da, pairs)
+
+    return mode_da, highest_frequency
+
+
+def increase_key_frequency(current_key: str, highest_frequency: int, hmap: HashMap) -> int:
+    """
+    Increases the frequency of the provided key in the hashmap by 1 and sets the highest_frequency if the keys
+    frequency is greater than the current highest frequency
+
+    :param current_key: key from hashmap
+    :type current_key: str
+    :param highest_frequency: highest amount of times any one key is in the hashmap
+    :type int
+    :param hmap: provided hashmap containing the keys
+    :type Hashmap
+    :return: highest frequency of the hashmap
+    :rtype: int
+    """
+    if not hmap.contains_key(current_key):
+        hmap.put(current_key, 1)
+    else:
+        new_value = hmap.get(current_key) + 1
+        hmap.put(current_key, new_value)
+
+        # changes the highest frequency if the keys value is now greater than previous highest frequency
+        if new_value > highest_frequency:
+            highest_frequency = new_value
+
+    return highest_frequency
+
+
+def build_mode_array(highest_frequency, mode_da, pairs):
+    """
+    Takes in array of key/value tuples and builds out a DynamicArray consisting of all the pairs that are equal
+    to the highest frequency
+
+    :param highest_frequency: highest frequency of the hash map
+    :type highest_frequency: int
+    :param mode_da: DynamicArray to be built out containing highest frequency key/value pair tuples
+    :type mode_da: DynamicArray
+    :param pairs: DynamicArray containing all hashmaps key/value pairs as tuples
+    :type pairs: DynamicArray
+    """
     for i in range(0, pairs.length()):
         current_key = pairs[i][0]
         value = pairs[i][1]
+
         if value == highest_frequency:
             mode_da.append(current_key)
-
-    return mode_da, highest_frequency
 
 
 # ------------------- BASIC TESTING ---------------------------------------- #
